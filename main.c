@@ -7,11 +7,13 @@
 #define GPIO23      4;
 #define GPIO24      5;
 #define GPIO20      28;
-static int TRIGGER_PIN    = GPIO23;
-static int ECHO_PIN       = GPIO24;
-static int PUMP_PIN       = GPIO20;
-static double SOUND_SPEED = 340.29;
-static int MAX_READS      = 30;
+static int TRIGGER_PIN      = GPIO23;
+static int ECHO_PIN         = GPIO24;
+static int PUMP_PIN         = GPIO20;
+static double SOUND_SPEED   = 340.29;
+static int MAX_READS        = 30;
+static double ALERT_LEVEL   = 4.30;
+static int MEASURE_INTERVAL = 100000; // 100ms
 struct timespec start_time;
 struct timespec end_time;
 
@@ -83,7 +85,7 @@ int main()
     // Take 30 measures and find the average
     for (x = 0; x < MAX_READS; x++) {
       sum = 0;
-      usleep(100000);
+      usleep(MEASURE_INTERVAL);
       measure = get_distance();
       // Push the read to the array
       read_distance_array[x] = measure;
@@ -91,9 +93,9 @@ int main()
     for (x = 0; x < MAX_READS; x++) {
       sum = sum + read_distance_array[x];
     }
-    average_distance = sum / 30;
+    average_distance = sum / MAX_READS;
     printf("Average distance: %.2f\n", average_distance);
-    if (average_distance > 4.00) {
+    if (average_distance > ALERT_LEVEL) {
       printf("Refilling the tank\n");
       refill_water();
     }
