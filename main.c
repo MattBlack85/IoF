@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -12,7 +13,7 @@ static int ECHO_PIN         = GPIO24;
 static int PUMP_PIN         = GPIO20;
 static double SOUND_SPEED   = 340.29;
 static int MAX_READS        = 30;
-static double ALERT_LEVEL   = 4.30;
+static double ALERT_LEVEL   = 6.90;
 static int MEASURE_INTERVAL = 100000; // 100ms
 struct timespec start_time;
 struct timespec end_time;
@@ -55,9 +56,9 @@ double get_distance() {
 
 void refill_water()
 {
-  /* Turn on the pump and refill for 3 sec */
+  /* Turn on the pump and refill for 5 sec */
   digitalWrite(PUMP_PIN, LOW);
-  sleep(3);
+  sleep(5);
   digitalWrite(PUMP_PIN, HIGH);
 }
 
@@ -72,16 +73,20 @@ return 0;
 
 int main()
 {
-  int x;
+  int x, alarm_counter;
   double average_distance, measure, sum, read_distance_array [30];
 
   wiringPiSetup();
   setup_pump();
   sleep(2);
 
+  // Init the alarm counter
+  alarm_counter = 0;
   while(1) {
+    // Init the array
+    memset(read_distance_array, 0, sizeof read_distance_array);
     // Wait 30 sec between one measurement and the other
-    sleep(30);
+    sleep(20);
     // Take 30 measures and find the average
     for (x = 0; x < MAX_READS; x++) {
       sum = 0;
@@ -96,8 +101,15 @@ int main()
     average_distance = sum / MAX_READS;
     printf("Average distance: %.2f\n", average_distance);
     if (average_distance > ALERT_LEVEL) {
+      alarm_counter = alarm_counter + 1;
+    } else {
+      alarm_counter = 0;
+    }
+
+    if (alarm_counter == 3) {
       printf("Refilling the tank\n");
       refill_water();
+      alarm_counter = 0;
     }
   }
 
