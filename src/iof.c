@@ -2,15 +2,13 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
 #include <wiringPi.h>
+#include "pump.h"
 
 #define GPIO23      4;
 #define GPIO24      5;
-#define GPIO20      28;
 static int TRIGGER_PIN      = GPIO23;
 static int ECHO_PIN         = GPIO24;
-static int PUMP_PIN         = GPIO20;
 static double SOUND_SPEED   = 340.29;
 static int MAX_READS        = 30;
 static double ALERT_LEVEL   = 6.90;
@@ -52,22 +50,6 @@ double get_distance() {
   distance = ((travel_time/1000000000.0) * SOUND_SPEED)/2;
 
   return distance * 100;
-}
-
-void refill_water()
-{
-  /* Turn on the pump and refill for 5 sec */
-  digitalWrite(PUMP_PIN, LOW);
-  sleep(5);
-  digitalWrite(PUMP_PIN, HIGH);
-}
-
-int setup_pump()
-{
-  pinMode(PUMP_PIN, OUTPUT);
-  digitalWrite(PUMP_PIN, HIGH);
-
-return 0;
 }
 
 
