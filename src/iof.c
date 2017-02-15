@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include "pump.h"
+#include "mail.h"
 
 #define GPIO23      4;
 #define GPIO24      5;
@@ -91,6 +92,7 @@ int main()
     if (alarm_counter == 3) {
       printf("Refilling the tank\n");
       refill_water();
+      send_mail("Tank refilled");
       alarm_counter = 0;
     }
   }
