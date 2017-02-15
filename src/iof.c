@@ -8,14 +8,17 @@
 
 #define GPIO23      4;
 #define GPIO24      5;
-static int TRIGGER_PIN      = GPIO23;
-static int ECHO_PIN         = GPIO24;
-static double SOUND_SPEED   = 340.29;
-static int MAX_READS        = 30;
-static double ALERT_LEVEL   = 6.90;
-static int MEASURE_INTERVAL = 100000; // 100ms
+static int TRIGGER_PIN           = GPIO23;
+static int ECHO_PIN              = GPIO24;
+static double SOUND_SPEED        = 340.29;
+static double WATER_LEVEL_CRITIC = 0.20;
+static int MAX_READS             = 30;
+static int CALIBRATION_PROBES    = 100;
+static double ALERT_LEVEL;
+static int MEASURE_INTERVAL      = 100000; // 100ms
 struct timespec start_time;
 struct timespec end_time;
+
 
 
 void record_pulse_length (void) {
@@ -53,16 +56,41 @@ double get_distance() {
   return distance * 100;
 }
 
+void calibrate_distance(void) {
+  int x;
+  double result, sum;
+  sum = 0;
+
+  for (x = 0; x < CALIBRATION_PROBES; x++) {
+    result = get_distance();
+    if (result < 0) {
+      /* sometimes we read negatives values, ignore those */
+      CALIBRATION_PROBES = CALIBRATION_PROBES - 1;
+      continue;
+    }
+    sum = sum + result;
+    usleep(250000);
+  }
+  ALERT_LEVEL = (sum / CALIBRATION_PROBES) + WATER_LEVEL_CRITIC;
+}
+
 
 int main()
 {
   int x, alarm_counter;
   double average_distance, measure, sum, read_distance_array [30];
 
+  printf("Setting up the GPIO...\n");
   wiringPiSetup();
+  printf("GPIO setup!\n");
+  printf("Setting up the pump...\n");
   setup_pump();
+  printf("Pump setup!\n");
   sleep(2);
 
+  printf("Calibrating system...\n");
+  calibrate_distance();
+  printf("Calibration over, alert level set to %.2fcm\n", ALERT_LEVEL);
   // Init the alarm counter
   alarm_counter = 0;
   while(1) {
@@ -82,7 +110,7 @@ int main()
       sum = sum + read_distance_array[x];
     }
     average_distance = sum / MAX_READS;
-    printf("Average distance: %.2f\n", average_distance);
+    printf("Average distance: %.2fcm\n", average_distance);
     if (average_distance > ALERT_LEVEL) {
       alarm_counter = alarm_counter + 1;
     } else {
